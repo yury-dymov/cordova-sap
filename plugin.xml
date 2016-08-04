@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-sap" version="0.0.1">
+    <name>SAP</name>
+    <description>Cordova SAP Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,device</keywords>
+    <js-module src="www/cordova-sap.js" name="cordova-sap">
+        <clobbers target="device" />
+    </js-module>
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="CordovaSap">
+                <param name="ios-package" value="CDVSap"/>
+            </feature>
+        </config-file>
+        <header-file src="src/ios/CDVSap.h" />
+        <source-file src="src/ios/CDVSap.m" />
+    </platform>
+</plugin>
