@@ -1,6 +1,6 @@
 #import <Cordova/CDVPlugin.h>
 
-@interface Sap : CDVPlugin
+@interface CDVSap : CDVPlugin
 
 - (void)sapHelloWorld:(CDVInvokedUrlCommand*)command;
 

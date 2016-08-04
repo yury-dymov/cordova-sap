@@ -1,6 +1,6 @@
 #import "CDVSap.h"
 
-@implementation Sap
+@implementation CDVSap
 
 - (void)sapHelloWorld:(CDVInvokedUrlCommand*)command {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Hello World"];
