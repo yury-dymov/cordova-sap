@@ -7,29 +7,35 @@ static CDVSap *_instance;
 
 @interface CDVSap() {
   BOOL _initialized;
-  dispatch_queue_t _cdvSapQueue;
 }
+
+@property (nonatomic, strong) dispatch_queue_t _cdvSapQueue;
 
 @end
 
 @implementation CDVSap
+@synthesize _cdvSapQueue;
 
 - (id)init {
   if (!_instance) {
     self = [super init];
-        
-    if (self) {
-      _cdvSapQueue = dispatch_queue_create("CDVSapQueue", 0);
-    }
-        
+      
     _instance = self;
   }
   
   return _instance;
 }
 
+- (dispatch_queue_t)_cdvSapQueue {
+    if (!_cdvSapQueue) {
+        _cdvSapQueue = dispatch_queue_create("CDVSapQueue", 0);
+    }
+    
+    return _cdvSapQueue;
+}
+
 - (void)initialize:(CDVInvokedUrlCommand*)command {
-  dispatch_async(_cdvSapQueue, {
+  dispatch_async(self._cdvSapQueue, ^(void){
     if (command.arguments.count != 2) {
       [self _returnError:command andMessage:@"Two arguments should be provided to initialize: license and PIN"];
       return;
@@ -94,7 +100,7 @@ static CDVSap *_instance;
   
 
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command {
-  dispatch_async(_cdvSapQueue, {
+  dispatch_async(self._cdvSapQueue, ^{
     if (!_initialized) {
       [self _returnError:command];
       return;
@@ -122,7 +128,7 @@ static CDVSap *_instance;
   
     NSString *globalCustomerPin = [command.arguments objectAtIndex:4];
   
-    ret = verifyPIN(nil, globalCustomerPin, globalCustomerPin.length);
+    ret = verifyPIN(nil, globalCustomerPin, (int)globalCustomerPin.length);
 
     if (ret != EStateSuccess) {
       [self _returnCommandError:command];
