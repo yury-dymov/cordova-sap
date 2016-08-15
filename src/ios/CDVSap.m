@@ -7,6 +7,7 @@ static CDVSap *_instance;
 
 @interface CDVSap() {
   BOOL _initialized;
+  dispatch_queue_t _cdvSapQueue;
 }
 
 @end
@@ -17,6 +18,10 @@ static CDVSap *_instance;
   if (!_instance) {
     self = [super init];
         
+    if (self) {
+      _cdvSapQueue = dispatch_queue_create("CDVSapQueue", 0);
+    }
+        
     _instance = self;
   }
   
@@ -24,36 +29,38 @@ static CDVSap *_instance;
 }
 
 - (void)initialize:(CDVInvokedUrlCommand*)command {
-  if (command.arguments.count != 2) {
-    [self _returnError:command andMessage:@"Two arguments should be provided to initialize: license and PIN"];
-    return;
-  }
+  dispatch_async(_cdvSapQueue, {
+    if (command.arguments.count != 2) {
+      [self _returnError:command andMessage:@"Two arguments should be provided to initialize: license and PIN"];
+      return;
+    }
   
-  setLicense([command.arguments objectAtIndex: 0]);
+    setLicense([command.arguments objectAtIndex: 0]);
   
-  NSString *pin = [command.arguments objectAtIndex: 1];
+    NSString *pin = [command.arguments objectAtIndex: 1];
   
-  int ret = EStateFailure;
+    int ret = EStateFailure;
   
-  ret = verifyPIN(nil, pin, 10);
+    ret = verifyPIN(nil, pin, 10);
   
-  if (ret == EStateErrorUninitPIN) {
+    if (ret == EStateErrorUninitPIN) {
       ret = SetPIN(@"", pin, 0);
       ret = InitPIN(pin, pin);
-  }
-  // verify PIN
-  ret = verifyPIN(nil, pin, 10);
+    }
+    
+    ret = verifyPIN(nil, pin, 10);
   
-  if (ret !== EStateSuccess) {
-    [self _returnError:command andMessage:@"Pin did not work for unknown reason"];
-    return;
-  }
+    if (ret != EStateSuccess) {
+      [self _returnError:command andMessage:@"Pin did not work for unknown reason"];
+      return;
+    }
   
-  _initialized = YES;
+    _initialized = YES;
   
-  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
 
-  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];  
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];  
+  });
 }
 
 + (id)allocWithZone:(NSZone*)zone {
@@ -87,62 +94,64 @@ static CDVSap *_instance;
   
 
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command {
-  if (!_initialized) {
-    [self _returnError:command];
-    return;
-  }
+  dispatch_async(_cdvSapQueue, {
+    if (!_initialized) {
+      [self _returnError:command];
+      return;
+    }
   
-  if (command.arguments.count != 5) {
-    [self _returnError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
-  }
+    if (command.arguments.count != 5) {
+      [self _returnError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
+    }
   
-  NSString *outPUT = nil;
-  NSString *outPUTcertReq = nil;
+    NSString *outPUT = nil;
+    NSString *outPUTcertReq = nil;
   
-  int ret = EStateFailure;
+    int ret = EStateFailure;
   
-  userInfo *user = [[userInfo alloc]init];
-  user.userName = [command.arguments objectAtIndex:2];
-  user.userEmail = [command.arguments objectAtIndex:3];
+    userInfo *user = [[userInfo alloc]init];
+    user.userName = [command.arguments objectAtIndex:2];
+    user.userEmail = [command.arguments objectAtIndex:3];
 
-  ret = initWebsiteAndAccountHash([command.arguments objectAtIndex:0], [command.arguments objectAtIndex:1]);
+    ret = initWebsiteAndAccountHash([command.arguments objectAtIndex:0], [command.arguments objectAtIndex:1]);
   
-  if (ret != EStateSuccess) {
-    [self _returnCommandError:command];
-    return;
-  }
+    if (ret != EStateSuccess) {
+      [self _returnCommandError:command];
+      return;
+    }
   
-  NSString *globalCustomerPin = [command.arguments objectAtIndex:4];
+    NSString *globalCustomerPin = [command.arguments objectAtIndex:4];
   
-  ret = verifyPIN(nil, globalCustomerPin, globalCustomerPin.length);
+    ret = verifyPIN(nil, globalCustomerPin, globalCustomerPin.length);
 
-  if (ret != EStateSuccess) {
-    [self _returnCommandError:command];
-    return;
-  }
+    if (ret != EStateSuccess) {
+      [self _returnCommandError:command];
+      return;
+    }
   
-  ret = genCSR(&outPUT, @"", user.userName, user.userEmail, nil, nil, 2048, @"RSA");  
+    ret = genCSR(&outPUT, @"", user.userName, user.userEmail, nil, nil, 2048, @"RSA");  
   
-  if (ret != EStateSuccess || !outPUT) {
-    [self _returnCommandError:command];
-    return;
-  }
+    if (ret != EStateSuccess || !outPUT) {
+      [self _returnCommandError:command];
+      return;
+    }
   
-  outPUTcertReq = [[NSString alloc] initWithString: outPUT];
-  outPUTcertReq = [outPUTcertReq stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
+    outPUTcertReq = [[NSString alloc] initWithString: outPUT];
+    outPUTcertReq = [outPUTcertReq stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
         
-  ret = enrollCert(&outPUT, outPUTcertReq, user, @"itrusyes", @"itrusyes", EAutoApprovalCertificate);
+    ret = enrollCert(&outPUT, outPUTcertReq, user, @"itrusyes", @"itrusyes", EAutoApprovalCertificate);
   
-  if (ret != EStateSuccess) {
-    [self _returnCommandError:command];
-    return;
-  }
+    if (ret != EStateSuccess) {
+      [self _returnCommandError:command];
+      return;
+    }
   
-  ret = importCert(nil, outPUT);
+    ret = importCert(nil, outPUT);
                   
-  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outPUT];    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outPUT];    
   
-  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];                                          
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];                                          
+  });
 }
 
 @end
