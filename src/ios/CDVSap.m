@@ -57,7 +57,7 @@ static CDVSap *_instance;
 }
 
 
-- (void)_returnError:(CDVInvokedUrlCommand*)command {
+- (void)_returnCommandError:(CDVInvokedUrlCommand*)command {
   NSString *outPUT = nil;  
   
   getLastErrInfo(&outPUT);
@@ -70,12 +70,12 @@ static CDVSap *_instance;
 
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command {
   if (!_initialized) {
-    [self _returnError:command];
+    [self _returnCommandError:command];
     return;
   }
   
   if (command.arguments.count != 5) {
-    [self _returnError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
+    [self _returnCommandError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
   }
   
   NSString *outPUT = nil;
@@ -90,7 +90,7 @@ static CDVSap *_instance;
   ret = initWebsiteAndAccountHash([command.arguments objectAtIndex:0], [command.arguments objectAtIndex:1]);
   
   if (ret != EStateSuccess) {
-    [self _returnError:command];
+    [self _returnCommandError:command];
     return;
   }
   
@@ -99,14 +99,14 @@ static CDVSap *_instance;
   ret = verifyPIN(nil, globalCustomerPin, globalCustomerPin.length);
 
   if (ret != EStateSuccess) {
-    [self _returnError:command];
+    [self _returnCommandError:command];
     return;
   }
   
   ret = genCSR(&outPUT, @"", user.userName, user.userEmail, nil, nil, 2048, @"RSA");  
   
   if (ret != EStateSuccess || !outPUT) {
-    [self _returnError:command];
+    [self _returnCommandError:command];
     return;
   }
   
@@ -116,7 +116,7 @@ static CDVSap *_instance;
   ret = enrollCert(&outPUT, outPUTcertReq, user, @"itrusyes", @"itrusyes", EAutoApprovalCertificate);
   
   if (ret != EStateSuccess) {
-    [self _returnError:command];
+    [self _returnCommandError:command];
     return;
   }
   
