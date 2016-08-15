@@ -1,6 +1,6 @@
 #import "CDVSap.h"
-#include "func_def.h"
-#include "type_def.h"
+#import "func_def.h"
+#import "type_def.h"
 
 
 static CDVSap *_instance;

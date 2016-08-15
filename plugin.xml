@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-sap" version="0.0.6">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-sap" version="0.0.7">
     <name>SAP</name>
     <description>Cordova SAP Plugin</description>
     <license>Apache 2.0</license>
@@ -14,6 +14,8 @@
             </feature>
         </config-file>
         <header-file src="src/ios/CDVSap.h" />
+        <header-file src="src/ios/func_def.h" />
+        <header-file src="src/ios/type_def.h" />                
         <source-file src="src/ios/CDVSap.m" />
         <source-file src="src/ios/lib/libO_All.a" framework="true" />
     </platform>
