@@ -1,5 +1,5 @@
 # cordova-sap
-Cordova plugin, which provides JS interface for Tianwei SDK to enable digital signature and encryption/decryption.
+Cordova plugin. Provides JS interface for Tianwei SDK to enable digital signature, encryption and decryption.
 Currently implemented only for iOS devices.
 
 # Installation
