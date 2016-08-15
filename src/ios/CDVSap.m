@@ -6,7 +6,7 @@
 static CDVSap *_instance;
 
 @interface CDVSap() {
-  BOOL _initialzed;
+  BOOL _initialized;
 }
 
 @end
@@ -31,14 +31,14 @@ static CDVSap *_instance;
   
   setLicense([command.arguments objectAtIndex: 0]);
   
-  _initialzed = YES;
+  _initialized = YES;
   
   CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
 
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];  
 }
 
-+ (id)allocWithZone:(zone) {
++ (id)allocWithZone:(NSZone*)zone {
   if (!_instance) {
     return [super allocWithZone:zone];
   }
