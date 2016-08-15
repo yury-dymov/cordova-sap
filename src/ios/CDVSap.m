@@ -24,12 +24,30 @@ static CDVSap *_instance;
 }
 
 - (void)initialize:(CDVInvokedUrlCommand*)command {
-  if (command.arguments.count == 0) {
-    [self _returnError:command];
+  if (command.arguments.count != 2) {
+    [self _returnError:command andMessage:@"Two arguments should be provided to initialize: license and PIN"];
     return;
   }
   
   setLicense([command.arguments objectAtIndex: 0]);
+  
+  NSString *pin = [command.arguments objectAtIndex: 1];
+  
+  int ret = EStateFailure;
+  
+  ret = verifyPIN(nil, pin, 10);
+  
+  if (ret == EStateErrorUninitPIN) {
+      ret = SetPIN(@"", pin, 0);
+      ret = InitPIN(pin, pin);
+  }
+  // verify PIN
+  ret = verifyPIN(nil, pin, 10);
+  
+  if (ret !== EStateSuccess) {
+    [self _returnError:command andMessage:@"Pin did not work for unknown reason"];
+    return;
+  }
   
   _initialized = YES;
   
