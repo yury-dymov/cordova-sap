@@ -70,12 +70,12 @@ static CDVSap *_instance;
 
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command {
   if (!_initialized) {
-    [self _returnCommandError:command];
+    [self _returnError:command];
     return;
   }
   
   if (command.arguments.count != 5) {
-    [self _returnCommandError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
+    [self _returnError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
   }
   
   NSString *outPUT = nil;
