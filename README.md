@@ -30,7 +30,7 @@ Requests certificate from Tianwei and stores it in the application
 #### Returns
 Certificate provided by Tianwei SDK or error
 
-#### sign
+# sign
 Signs data with digital signature
 
 #### Arguments
