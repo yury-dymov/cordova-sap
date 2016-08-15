@@ -160,4 +160,31 @@ static CDVSap *_instance;
   });
 }
 
+- (void)sign:(CDVInvokedUrlCommand*)command {
+  dispatch_async(self._cdvSapQueue, ^{
+    if (!_initialized) {
+      [self _returnError:command];
+      return;
+    }
+  
+    if (command.arguments.count != 2 || command.arguments.count != 3) {
+      [self _returnError:command andMessage:@"2 or 3 arguments should be provided: data to sign, certificate and algorithm(optional)"];
+    }
+    
+    NSString *outPUT = nil;
+    NSString *algorithm = command.arguments.count == 3 ? command.arguments[2] : @"SHA1";
+  
+    int ret = signMessage(&outPUT, command.arguments[0], command.arguments[1], algorithm, ESignWithP7Detach);
+
+    if (ret != EStateSuccess) {
+      [self _returnCommandError:command];
+      return;
+    }
+  
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outPUT];    
+  
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];                                          
+  });  
+}
+
 @end
