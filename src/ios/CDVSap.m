@@ -9,6 +9,8 @@ static CDVSap *_instance;
   BOOL _initialzed;
 }
 
+@end
+
 @implementation CDVSap
 
 - (id)init {
