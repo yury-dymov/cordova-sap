@@ -167,15 +167,28 @@ static CDVSap *_instance;
       return;
     }
   
-    if (command.arguments.count != 2 || command.arguments.count != 3) {
-      [self _returnError:command andMessage:@"2 or 3 arguments should be provided: data to sign, certificate and algorithm(optional)"];
+    if (command.arguments.count != 1 && command.arguments.count != 2) {
+      [self _returnError:command andMessage:@"1 or 2 arguments should be provided: data to sign and algorithm(optional)"];
     }
     
     NSString *outPUT = nil;
-    NSString *algorithm = command.arguments.count == 3 ? command.arguments[2] : @"SHA1";
+    NSMutableArray *mutableArray;
+    NSString *algorithm = command.arguments.count == 2 ? command.arguments[1] : @"SHA1";
   
-    int ret = signMessage(&outPUT, command.arguments[0], command.arguments[1], algorithm, ESignWithP7Detach);
-
+    int ret = filterCert(&mutableArray, 0, 0, 0, 0, 0);
+    
+    if (ret != EStateSuccess) {
+      [self _returnCommandError:command];
+      return;
+    }
+    
+    if (mutableArray.count == 0) {
+      [self _returnError:command andMessage:@"No appropriate certificates found!"];
+      return;
+    }
+    
+    ret = signMessage(&outPUT, command.arguments[0], [mutableArray objectAtIndex:0], algorithm, ESignWithP7Detach);
+      
     if (ret != EStateSuccess) {
       [self _returnCommandError:command];
       return;

@@ -9,7 +9,7 @@
 // 5 arguments should be provided: service url, account hash, user name, user email and pin
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command;
 
-// 2 arguments should be provided, 3d is optional: data, certificate, algorithm=SHA1
+// 1 argument should be provided, 2nd is optional: data, algorithm=SHA1
 - (void)sign:(CDVInvokedUrlCommand*)command;
 
 @end  
