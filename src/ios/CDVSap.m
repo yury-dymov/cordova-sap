@@ -57,14 +57,25 @@ static CDVSap *_instance;
 }
 
 
+- (void)_returnError:(CDVInvokedUrlCommand*)command {
+  NSString *outPUT = nil;  
+  
+  getLastErrInfo(&outPUT);
+  
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:outPUT];    
+  
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];    
+}
+  
+
 - (void)requestCertificate:(CDVInvokedUrlCommand*)command {
   if (!_initialized) {
     [self _returnError:command];
     return;
   }
   
-  if (command.arguments.count != 4) {
-    [self _returnError:command andMessage:@"4 arguments should be provided: service url, account hash, user name and user email"];
+  if (command.arguments.count != 5) {
+    [self _returnError:command andMessage:@"5 arguments should be provided: service url, account hash, user name, user email and global customer PIN"];
   }
   
   NSString *outPUT = nil;
@@ -77,33 +88,43 @@ static CDVSap *_instance;
   user.userEmail = [command.arguments objectAtIndex:3];
 
   ret = initWebsiteAndAccountHash([command.arguments objectAtIndex:0], [command.arguments objectAtIndex:1]);
-
-  if (ret == EStateSuccess) {
-      ret = genCSR(&outPUT, @"", user.userName, user.userEmail, nil, nil, 2048, @"RSA");  
-
-      if (outPUT) {
-          outPUTcertReq = [[NSString alloc] initWithString: outPUT];
-          outPUTcertReq = [outPUTcertReq stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
-        
-          if (ret == EStateSuccess) {
-              ret = enrollCert(&outPUT, outPUTcertReq, user, @"itrusyes", @"itrusyes", EAutoApprovalCertificate);
-          
-              if (ret == EStateSuccess) {
-                  ret = importCert(nil, outPUT);
-                  
-                  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outPUT];    
   
-                  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];                                          
-              }                
-          }              
-      }      
+  if (ret != EStateSuccess) {
+    [self _returnError:command];
+    return;
   }
   
-  getLastErrInfo(&outPUT);
+  NSString *globalCustomerPin = [command.arguments objectAtIndex:4];
   
-  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:outPUT];    
+  ret = verifyPIN(nil, globalCustomerPin, globalCustomerPin.length);
+
+  if (ret != EStateSuccess) {
+    [self _returnError:command];
+    return;
+  }
   
-  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];  
+  ret = genCSR(&outPUT, @"", user.userName, user.userEmail, nil, nil, 2048, @"RSA");  
+  
+  if (ret != EStateSuccess || !outPUT) {
+    [self _returnError:command];
+    return;
+  }
+  
+  outPUTcertReq = [[NSString alloc] initWithString: outPUT];
+  outPUTcertReq = [outPUTcertReq stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
+        
+  ret = enrollCert(&outPUT, outPUTcertReq, user, @"itrusyes", @"itrusyes", EAutoApprovalCertificate);
+  
+  if (ret != EStateSuccess) {
+    [self _returnError:command];
+    return;
+  }
+  
+  ret = importCert(nil, outPUT);
+                  
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outPUT];    
+  
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];                                          
 }
 
 @end
